@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Gismeteo Parser</title>
+</head>
+<body>
+
+<h1>Погода (Gismeteo)</h1>
+
+<input id="city" placeholder="Минск">
+<button onclick="loadWeather()">Получить</button>
+
+<pre id="result"></pre>
+
+<script>
+async function loadWeather() {
+  const city = document.getElementById('city').value;
+  const result = document.getElementById('result');
+
+  result.textContent = 'Загрузка...';
+
+  try {
+    const res = await fetch(`/weather?city=${encodeURIComponent(city)}`);
+    const data = await res.json();
+    result.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    result.textContent = 'Ошибка';
+  }
+}
+</script>
+
+</body>
+</html>

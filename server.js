@@ -1,55 +1,30 @@
-const http = require('http');
-const fs = require('fs');
-const axios = require('axios');
-const cheerio = require('cheerio');
+const express = require('express');
+const path = require('path');
+const { getWeatherByCity } = require('./services/gismeteo');
 
-const server = http.createServer(async (req, res) => {
+const app = express();
+const PORT = 3000;
 
-  if (req.url === '/') {
-    const html = fs.readFileSync('index.html');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(html);
-    return;
+// статика
+app.use(express.static(path.join(__dirname, 'public')));
+
+// API
+app.get('/weather', async (req, res) => {
+  const city = req.query.city;
+
+  if (!city) {
+    return res.status(400).json({ error: 'Город не указан' });
   }
 
-  if (req.url.startsWith('/weather')) {
-    const urlParams = new URLSearchParams(req.url.split('?')[1]);
-    const city = urlParams.get('city');
-
-    const cities = {
-      gme: 'https://www.gismeteo.by/weather-gomel-4918/'
-    };
-
-    const cityUrl = cities[city];
-    if (!cityUrl) {
-      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ error: 'City not found' }));
-      return;
-    }
-fs.writeFileSync('page.html', response.data);
-    try {
-      const response = await axios.get(cityUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0'
-        }
-      });
-
-      const $ = cheerio.load(response.data);
-      const temperature = $('span.temp__value').first().text();
-
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({
-        city,
-        temperature
-      }));
-
-    } catch (error) {
-      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ error: 'Ошибка получения погоды' }));
-    }
+  try {
+    const data = await getWeatherByCity(city);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-server.listen(3000, () => {
-  console.log('Сервер запущен на 3000 порту');
+app.listen(PORT, () => {
+  console.log(`🚀 Сервер запущен: http://localhost:${PORT}`);
 });
+
