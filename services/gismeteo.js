@@ -9,6 +9,17 @@ const cities = {
   grodno: '/weather-grodno-4910/'
 };
 
+function parseTemp($el)
+ { if (!$el || !$el.length) return null;
+   const v = $el.attr("value"); 
+   if (v != null && v !==""){
+     const n = Number (v);
+      return Number.isFinite(n) ? n : null; 
+    } const txt = $el.text().trim().replaceAll ("-", "-").replaceAll("+", ""); 
+    const n = Number(txt); 
+    return Number.isFinite(n) ? n : null; 
+  }
+
 async function getWeatherByCity(city) {
   const cityKey = city.toLowerCase();
 
@@ -17,16 +28,17 @@ async function getWeatherByCity(city) {
   }
 
   const cityUrl = 'https://www.gismeteo.by' + cities[cityKey];
-  const response = await axios.get(cityUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0' }
-  });
-
+  const response = await axios.get(cityUrl)
+    if (!response || !response.data){ 
+      throw new Error ('Данные с Gismeteo не удалось получить'); 
+    }
   const $ = cheerio.load(response.data);
-  const temperature = $('.unit_temperature_c').first().text().trim();
+  const tempEl = $(".weather .weather-value temperature-value").first();
+  const temp = parseTemp(tempEl);
 
   return {
     city: cityKey,
-    temperature: temperature || 'нет данных',
+    temperature: temp || 'нет данных',
     source: cityUrl
   };
 }
